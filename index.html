@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="">
+        <style>
+           div{
+             position: absolute;
+             top: 50%;
+             left: 50%;
+             transform: translate(-50%, -50%);
+             /* border: 1px solid black; */
+             border-radius: 999em;
+             background-size: 500px auto ;
+             background-color: white;
+           }
+        </style>
+    </head>
+    <body>
+        <h3 style="text-align: center;margin-top: 100px;">可拖入图片改变图像！</h3>
+        <div id="container">
+            
+            <button style="position:absolute;bottom: 0; left: 0;" id="destroy">打乱</button>
+            <button style="position:absolute;bottom: 0;right: 0;" id="reset">还原</button>
+        </div>
+       
+        
+        <script async defer>
+
+        document.oncontextmenu = function () {
+            return false
+        }
+        const num = 5;
+        const nodes = [];
+        const maxSize = 500;
+        const size = maxSize / num;
+        container.style.width = maxSize + 'px'
+        container.style.height = maxSize + 'px'
+        for(let i = 0; i < num; i++) {
+            const div = document.createElement('div')
+            const curSize = size * (num - i)
+            div.style.width = curSize + 'px'
+            div.style.height = curSize + 'px'
+            div.style.backgroundImage = 'url(./man.jpg)'
+            div.style.backgroundPosition = `-${(maxSize - curSize) / 2}px -${(maxSize - curSize) / 2}px`
+            container.appendChild(div)
+            addRotateEvent(div)
+            nodes.push(div)
+        }
+
+        
+        //    let dropZone = nodes[0]
+        //    document.addEventListener("dragenter", function (e) {
+        //         e.preventDefault();
+        //         e.stopPropagation();
+        //     }, false);
+
+            document.addEventListener("dragover", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+
+            document.addEventListener("dragleave", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+
+            document.addEventListener("drop", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+               
+            })
+           
+            container.addEventListener('drop', e => {
+                const file = e.dataTransfer.items[0].getAsFile()
+                const url = URL.createObjectURL(file)
+                nodes.forEach(item => item.style.backgroundImage = `url(${url})`)
+            })
+        
+            destroy.addEventListener('click', () => {
+                nodes.forEach(item =>  setAngle(item, Math.random() * 360))
+            })
+
+            reset.addEventListener('click', () => {
+                nodes.forEach(item =>  setAngle(item, 0))
+            })
+       
+
+
+        
+        function addRotateEvent(img) {
+            img.style.userSelect = 'none'
+            let timer
+            img.angle = 0
+            img.oldTransForm = window.getComputedStyle(img, null).transform 
+           
+                
+            img.addEventListener('mousedown', (event) => {
+                    event.preventDefault()
+                    let x = event.button === 0 ? 0.4 : -0.4
+                    if (timer != null) clearInterval(timer)
+                    timer = setInterval(() => {
+                        
+                        setAngle(img, img.angle + x)
+                     
+                    }, 1)
+            })
+            document.addEventListener('mouseup', () => {
+                    if(timer != null)clearInterval(timer)
+            })
+        }
+
+
+        function setAngle(el, angle){
+            el.angle = angle
+            el.style.transform = el.oldTransForm + ` rotate(${angle + 'deg'})`
+        }
+        </script>
+    </body>
+</html>
