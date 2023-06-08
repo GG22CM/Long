@@ -12,7 +12,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="">
         <style>
-           div{
+           #container, #container>div{
              position: absolute;
              top: 50%;
              left: 50%;
@@ -25,36 +25,187 @@
         </style>
     </head>
     <body>
-        <h3 style="text-align: center;margin-top: 100px;">可拖入图片改变图像！</h3>
+        <div style="text-align: center;margin-top: 100px;">
+            <h3 >可拖入图片改变图像！</h3>
+            <input  type="number" style="width:300px;" placeholder="输入数字(1-100)增加难度，回车确认"  id="reNum"></input>    
+        </div>
+       
         <div id="container">
-            
             <button style="position:absolute;bottom: 0; left: 0;" id="destroy">打乱</button>
             <button style="position:absolute;bottom: 0;right: 0;" id="reset">还原</button>
+             
         </div>
        
         
         <script async defer>
+            class Game {
+                nodes = [];
+                 _num ;
+                _maxSize;
+                container;
+                img = './man.jpg';
 
-        document.oncontextmenu = function () {
-            return false
-        }
-        const num = 5;
-        const nodes = [];
-        const maxSize = 500;
-        const size = maxSize / num;
-        container.style.width = maxSize + 'px'
-        container.style.height = maxSize + 'px'
-        for(let i = 0; i < num; i++) {
-            const div = document.createElement('div')
-            const curSize = size * (num - i)
-            div.style.width = curSize + 'px'
-            div.style.height = curSize + 'px'
-            div.style.backgroundImage = 'url(./man.jpg)'
-            div.style.backgroundPosition = `-${(maxSize - curSize) / 2}px -${(maxSize - curSize) / 2}px`
-            container.appendChild(div)
-            addRotateEvent(div)
-            nodes.push(div)
-        }
+                constructor(container, maxSize, num) {
+                    this.container = container
+                    this.maxSize = maxSize
+                    this.num = num
+                }
+                init() {
+                   this.clearDocument()
+                   this.clearElement()
+                   this.initElement()
+                   this.addDragEvent()
+                    
+                }
+
+
+                
+                initElement() {
+                    this.container.style.width = this.maxSize + 'px'
+                    this.container.style.height = this.maxSize + 'px'
+                    for(let i = 0; i < this.num; i++) {
+                        const div = document.createElement('div')
+                        const curSize = this.size * (this.num - i)
+                        div.style.width = curSize + 'px'
+                        div.style.height = curSize + 'px'
+                        div.style.backgroundImage = `url(${this.img})`
+                        div.style.backgroundPosition = `-${(this.maxSize - curSize) / 2}px -${(this.maxSize - curSize) / 2}px`
+                        this.container.appendChild(div)
+                        Game.addRotateEvent(div)
+                        this.nodes.push(div)
+                    }
+                }
+
+                addDragEvent() {
+                     this.container.addEventListener('drop', e => {
+                        const file = e.dataTransfer.items[0].getAsFile()
+                        const url = URL.createObjectURL(file)
+                        this.img = url
+                        this.nodes.forEach(item => item.style.backgroundImage = `url(${url})`)
+                    })
+            
+                }
+
+                clearElement() {
+                    this.nodes.forEach(item => this.container.removeChild(item))
+                    this.nodes = []
+                }
+
+                clearDocument() {
+                     document.oncontextmenu = function () {
+                            return false
+                    }
+                    Game.resetDragDefault()
+                }
+
+                reset() {
+                    this.nodes.forEach(item =>  Game.setAngle(item, 0))
+                }
+
+                destroy() {
+                    this.nodes.forEach(item =>  Game.setAngle(item, Math.random() * 360))
+                }
+
+                reNum(num) {
+                    this.num = num
+                    this.clearElement()
+                    this.initElement()
+                }
+
+                static  setAngle(el, angle){
+                    el.angle = angle
+                    el.style.transform = el.oldTransForm + ` rotate(${angle + 'deg'})`
+                }
+                static addRotateEvent(img) {
+                    img.style.userSelect = 'none'
+                    let timer
+                    img.angle = 0
+                    img.oldTransForm = window.getComputedStyle(img, null).transform 
+                
+                        
+                    img.addEventListener('mousedown', (event) => {
+                            event.preventDefault()
+                            let x = event.button === 0 ? 0.4 : -0.4
+                            if (timer != null) clearInterval(timer)
+                            timer = setInterval(() => {
+                                
+                                Game.setAngle(img, img.angle + x)
+                            
+                            }, 1)
+                    })
+                    document.addEventListener('mouseup', () => {
+                            if(timer != null)clearInterval(timer)
+                    })
+                }
+
+                static resetDragDefault() {
+                    document.addEventListener("dragover", function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }, false);
+
+                    document.addEventListener("dragleave", function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }, false);
+
+                    document.addEventListener("drop", function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    
+                    })
+                }
+
+
+                get num() {
+                    return this._num
+                }
+
+                set num(val) {
+                    this._num = val
+
+                }
+
+                get maxSize() {
+                    return this._maxSize
+                }
+
+                set maxSize(val) {
+                    this._maxSize = val
+                }
+
+                get size() {
+                    return this.maxSize / this.num
+                }
+              
+
+                
+            }
+
+            const game = new Game(container, 500, 5)
+            const destroy = document.getElementById('destroy')
+            const reset = document.getElementById('reset')
+            const reNum = document.getElementById('reNum')
+
+            game.init()
+
+            
+            destroy.addEventListener('click', () => {
+                game.destroy()
+            })
+
+            reset.addEventListener('click', () => {
+                game.reset()
+            })
+
+            reNum.addEventListener('keyup', event => {
+                console.log(event)
+                if (event.key === 'Enter' && reNum.value > 0 && reNum.value <= 100) {
+                    game.reNum(reNum.value)
+                }
+                
+            })
+
 
         
         //    let dropZone = nodes[0]
@@ -63,66 +214,13 @@
         //         e.stopPropagation();
         //     }, false);
 
-            document.addEventListener("dragover", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
-
-            document.addEventListener("dragleave", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
-
-            document.addEventListener("drop", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-               
-            })
            
-            container.addEventListener('drop', e => {
-                const file = e.dataTransfer.items[0].getAsFile()
-                const url = URL.createObjectURL(file)
-                nodes.forEach(item => item.style.backgroundImage = `url(${url})`)
-            })
-        
-            destroy.addEventListener('click', () => {
-                nodes.forEach(item =>  setAngle(item, Math.random() * 360))
-            })
-
-            reset.addEventListener('click', () => {
-                nodes.forEach(item =>  setAngle(item, 0))
-            })
-       
+         
 
 
         
-        function addRotateEvent(img) {
-            img.style.userSelect = 'none'
-            let timer
-            img.angle = 0
-            img.oldTransForm = window.getComputedStyle(img, null).transform 
-           
-                
-            img.addEventListener('mousedown', (event) => {
-                    event.preventDefault()
-                    let x = event.button === 0 ? 0.4 : -0.4
-                    if (timer != null) clearInterval(timer)
-                    timer = setInterval(() => {
-                        
-                        setAngle(img, img.angle + x)
-                     
-                    }, 1)
-            })
-            document.addEventListener('mouseup', () => {
-                    if(timer != null)clearInterval(timer)
-            })
-        }
+      
 
-
-        function setAngle(el, angle){
-            el.angle = angle
-            el.style.transform = el.oldTransForm + ` rotate(${angle + 'deg'})`
-        }
         </script>
     </body>
 </html>
